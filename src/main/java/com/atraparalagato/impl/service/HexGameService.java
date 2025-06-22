@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.springframework.stereotype.Service;
+
 import com.atraparalagato.base.model.GameBoard;
 import com.atraparalagato.base.model.GameState;
 import com.atraparalagato.base.repository.DataRepository;
@@ -27,18 +29,18 @@ import com.atraparalagato.impl.model.HexPosition;
  * Lógica de negocio compleja - Manejo de eventos y callbacks - Validaciones
  * avanzadas - Integración con repositorio y estrategias
  */
+@Service
 public class HexGameService extends GameService<HexPosition> {
 
 	// TODO: Los estudiantes deben inyectar dependencias
 	// Ejemplos: repository, movementStrategy, validator, etc.
 
-	@SuppressWarnings("unchecked")
 	public HexGameService(HexBoardFactory boardFactory, CatMovementStrategy<HexPosition> movementStrategy,
 			DataRepository<GameState<HexPosition>, String> repository, GameIdGenerator idGenerator,
 			GameStateFactory stateFactory) {
 		// TODO: Los estudiantes deben inyectar las dependencias requeridas
 
-		super(boardFactory.create(10), // gameBoard - TODO: Crear HexGameBoard
+		super(boardFactory.apply(10), // gameBoard - TODO: Crear HexGameBoard
 				movementStrategy, // movementStrategy - TODO: Crear estrategia de movimiento
 				repository, // gameRepository - TODO: Crear repositorio
 				(Supplier<String>)idGenerator, // gameIdGenerator - TODO: Crear generador de IDs
@@ -47,7 +49,7 @@ public class HexGameService extends GameService<HexPosition> {
 		);
 		// TODO: Inicializar dependencias y configuración
 		// Pista: Usar el patrón Factory para crear componentes
-		throw new UnsupportedOperationException("Los estudiantes deben implementar el constructor");
+		//throw new UnsupportedOperationException("Los estudiantes deben implementar el constructor");
 	}
 
 	/**

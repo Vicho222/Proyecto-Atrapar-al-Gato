@@ -1,17 +1,19 @@
 package com.atraparalagato.impl.factories;
 
+import java.util.function.Function;
+
 import org.springframework.stereotype.Component;
 
+import com.atraparalagato.base.model.GameState;
 import com.atraparalagato.impl.model.HexGameState;
+import com.atraparalagato.impl.model.HexPosition;
 
 @Component
-public class GameStateFactory {
+public class GameStateFactory  implements Function<String, GameState<HexPosition>> {
 
-	public HexGameState create(String gameId, int boardSize) {
-		return new HexGameState(gameId, boardSize);
-	}
-	
-	public HexGameState create(String gameId, int boardSize, int maxMovements) {
-		return new HexGameState(gameId, boardSize, maxMovements);
+	@Override
+	public GameState<HexPosition> apply(String gameId) {
+		// TODO Auto-generated method stub
+		return new HexGameState(gameId);
 	}
 }

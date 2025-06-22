@@ -1,12 +1,14 @@
 package com.atraparalagato.impl.strategy;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import com.atraparalagato.base.model.GameBoard;
 import com.atraparalagato.base.strategy.CatMovementStrategy;
 import com.atraparalagato.impl.model.HexPosition;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * Implementación esqueleto de estrategia BFS (Breadth-First Search) para el gato.

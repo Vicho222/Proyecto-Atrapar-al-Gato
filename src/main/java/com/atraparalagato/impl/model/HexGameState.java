@@ -1,6 +1,5 @@
 package com.atraparalagato.impl.model;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.atraparalagato.base.model.GameState;
@@ -33,7 +32,7 @@ public class HexGameState extends GameState<HexPosition> {
 	 * 
 	 * Un valor 0 indica que no hay límite
 	 */
-	private final int maxMovements;
+	private  int maxMovements;
 	
 	// TODO: Los estudiantes pueden agregar más campos según necesiten
 	// Ejemplos: tiempo de juego, dificultad, power-ups, etc.
@@ -80,6 +79,8 @@ public class HexGameState extends GameState<HexPosition> {
 		this.maxMovements = maxMovements;
 		
 		this.invalidMovements = 0;
+		
+		this.status =  GameStatus.IN_PROGRESS;
 
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar el
 		// constructor");
@@ -352,12 +353,17 @@ public class HexGameState extends GameState<HexPosition> {
 
 	public void setInvalidMovements(int invalidMovements) {
 		this.invalidMovements = invalidMovements;
+		this.updateGameStatus();
 	}
 
 	public int getMaxMovements() {
 		return maxMovements;
 	}
 
+	public void setMoveCount(int moveCount) {
+		super.moveCount = moveCount;
+		this.updateGameStatus();
+	}
 	// TODO: Los estudiantes pueden agregar más métodos según necesiten
 	// Ejemplos: getDifficulty(), getTimeElapsed(), getPowerUps(), etc.
 }

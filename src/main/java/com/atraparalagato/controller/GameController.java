@@ -2,6 +2,8 @@ package com.atraparalagato.controller;
 
 import com.atraparalagato.example.service.ExampleGameService;
 import com.atraparalagato.impl.model.HexPosition;
+import com.atraparalagato.impl.service.HexGameService;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,9 +28,11 @@ public class GameController {
     private boolean useExampleImplementation;
     
     private final ExampleGameService exampleGameService;
+    private final HexGameService hexGameService;
     
-    public GameController() {
+    public GameController(HexGameService hexGameService) {
         this.exampleGameService = new ExampleGameService();
+        this.hexGameService =  hexGameService;
     }
     
     /**
@@ -207,11 +211,12 @@ public class GameController {
     
     private ResponseEntity<Map<String, Object>> startGameWithStudentImplementation(int boardSize) {
         // TODO: Los estudiantes deben implementar esto usando sus propias clases
-        return ResponseEntity.ok(Map.of(
-            "error", "Student implementation not available yet",
-            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",
-            "implementation", "impl"
-        ));
+    	return ResponseEntity.ok(Map.of("message",hexGameService.startNewGame(boardSize)));
+//        return ResponseEntity.ok(Map.of(
+//            "error", "Student implementation not available yet",
+//            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",
+//            "implementation", "impl"
+//        ));
     }
     
     private ResponseEntity<Map<String, Object>> blockPositionWithStudentImplementation(String gameId, HexPosition position) {

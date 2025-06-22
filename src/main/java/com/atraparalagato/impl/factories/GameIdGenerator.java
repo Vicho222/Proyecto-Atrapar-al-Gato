@@ -1,13 +1,16 @@
 package com.atraparalagato.impl.factories;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.springframework.stereotype.Component;
 
 @Component
-public class GameIdGenerator {
+public class GameIdGenerator  implements Supplier<String>{
 
-	public String generateId() {
+
+	@Override
+	public String get() {
 		return UUID.randomUUID().toString();
 	}
 

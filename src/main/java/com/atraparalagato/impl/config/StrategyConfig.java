@@ -19,7 +19,7 @@ public class StrategyConfig {
 
     @Bean
     public CatMovementStrategy<HexPosition> catMovementStrategy(HexBoardFactory factory) {
-        GameBoard<HexPosition> board = factory.create(11);
+        GameBoard<HexPosition> board = factory.apply(11);
 
         return switch (strategyName) {
             case "aStar" -> new AStarCatMovement(board);
