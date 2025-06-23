@@ -125,6 +125,7 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 		} catch (EmptyResultDataAccessException e) {
 			return Optional.empty();
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new RuntimeException("Error al obtener GameState con ID: " + id, e);
 		}
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar

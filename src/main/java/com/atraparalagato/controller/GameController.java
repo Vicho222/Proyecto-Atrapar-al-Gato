@@ -232,7 +232,8 @@ public class GameController {
     
     private ResponseEntity<Map<String, Object>> getGameStateWithStudentImplementation(String gameId) {
         // TODO: Los estudiantes deben implementar esto usando sus propias clases
-    	return ResponseEntity.ok(Map.of("message", hexGameService.obtainGameStatus(gameId)));
+    	Optional<String> state = hexGameService.obtainGameStatus(gameId);
+    	return ResponseEntity.ok(Map.of("message", state.isEmpty() ? "NADA" : state.get()));
 //        return ResponseEntity.ok(Map.of(
 //            "error", "Student implementation not available yet",
 //            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",
