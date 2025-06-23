@@ -1,1 +1,8 @@
 
+data
+.settings
+bin
+.vscode
+.idea
+.DS_Store
+target

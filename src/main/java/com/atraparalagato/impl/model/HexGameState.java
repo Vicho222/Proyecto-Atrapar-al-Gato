@@ -1,5 +1,7 @@
 package com.atraparalagato.impl.model;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.atraparalagato.base.model.GameState;
@@ -17,11 +19,19 @@ import com.atraparalagato.impl.JsonUtils;
  */
 public class HexGameState extends GameState<HexPosition> {
 
+	public enum LEVEL_OF_DIFFICULTY {
+		EASY, HARD
+	};
+
 	public final static int DEFAULT_BOARD_SIZE = 11;
 	private HexPosition catPosition;
 	private HexGameBoard gameBoard;
 	private final int boardSize;
-
+	private LocalDateTime finishedAt;
+	private String playerId;
+	private LocalDateTime pauseddAt;
+	
+	private int points;
 	/**
 	 * LLeva la cuenta de los movimientos que son inválidos.
 	 */
@@ -32,32 +42,37 @@ public class HexGameState extends GameState<HexPosition> {
 	 * 
 	 * Un valor 0 indica que no hay límite
 	 */
-	private  int maxMovements;
-	
+	private int maxMovements;
+
+	private LEVEL_OF_DIFFICULTY levelOfDifficulty = LEVEL_OF_DIFFICULTY.EASY;
+
 	// TODO: Los estudiantes pueden agregar más campos según necesiten
 	// Ejemplos: tiempo de juego, dificultad, power-ups, etc.
 
 	/**
 	 * Constructor del juego que no tiene límite de movimientos.
-	 * @param gameId Identificador del juego
+	 * 
+	 * @param gameId    Identificador del juego
 	 * @param boardSize Tamaño del tablero
 	 */
 	public HexGameState(String gameId) {
 		this(gameId, DEFAULT_BOARD_SIZE, 0);
 	}
-	
+
 	/**
 	 * Constructor del juego que no tiene límite de movimientos.
-	 * @param gameId Identificador del juego
+	 * 
+	 * @param gameId    Identificador del juego
 	 * @param boardSize Tamaño del tablero
 	 */
 	public HexGameState(String gameId, int boardSize) {
 		this(gameId, boardSize, 0);
 	}
-	
+
 	/**
 	 * Constructor del juego que tiene límite de movimientos.
-	 * @param gameId Identificador del juego
+	 * 
+	 * @param gameId    Identificador del juego
 	 * @param boardSize Tamaño del tablero
 	 */
 	public HexGameState(String gameId, int boardSize, int maxMovements) {
@@ -77,17 +92,17 @@ public class HexGameState extends GameState<HexPosition> {
 		this.catPosition = new HexPosition(boardSize, boardSize);
 
 		this.maxMovements = maxMovements;
-		
+
 		this.invalidMovements = 0;
-		
-		this.status =  GameStatus.IN_PROGRESS;
+
+		this.status = GameStatus.IN_PROGRESS;
 
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar el
 		// constructor");
 	}
 
 	@Override
-	protected boolean canExecuteMove(HexPosition position) {
+	public boolean canExecuteMove(HexPosition position) {
 		// TODO: Implementar validación de movimientos más sofisticada
 		// Considerar:
 		// 1. Validación básica del tablero
@@ -98,7 +113,8 @@ public class HexGameState extends GameState<HexPosition> {
 		/*
 		 * E.OSORIO Si el juego está en progreso y el movimiento es válido.
 		 */
-		return !isGameFinished() && gameBoard.isValidMove(position);
+		boolean isPaused = GameStatus.PAUSED.equals(getStatus());
+		return !isGameFinished() && !isPaused && gameBoard.isValidMove(position) && !catPosition.equals(position);
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// canExecuteMove");
 	}
@@ -111,10 +127,11 @@ public class HexGameState extends GameState<HexPosition> {
 		boolean result = gameBoard.makeMove(position);
 		if (result) {
 			this.moveCount++;
-			this.updateGameStatus();
+			
 		} else {
 			this.invalidMovements++;
 		}
+		this.updateGameStatus();
 		return result;
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// performMove");
@@ -131,9 +148,11 @@ public class HexGameState extends GameState<HexPosition> {
 
 		if (isCatAtBorder()) {
 			setStatus(GameStatus.PLAYER_LOST);
+			finishedAt = LocalDateTime.now();
 			return;
 		} else if (isCatTrapped()) {
 			setStatus(GameStatus.PLAYER_WON);
+			finishedAt = LocalDateTime.now();
 			return;
 		}
 
@@ -142,8 +161,12 @@ public class HexGameState extends GameState<HexPosition> {
 		 * 
 		 * Es empate si se ha llegado al límite de movimientos.
 		 */
-		if(maxMovements != 0 && moveCount >= maxMovements)
-		setStatus(GameStatus.DRAW);
+		if (maxMovements != 0 && moveCount >= maxMovements) {
+			setStatus(GameStatus.DRAW);
+			finishedAt = LocalDateTime.now();
+		}
+		
+		this.points =  calculateScore();
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// updateGameStatus");
 	}
@@ -206,21 +229,21 @@ public class HexGameState extends GameState<HexPosition> {
 		// 4. Bonificaciones especiales
 		// 5. Penalizaciones por movimientos inválidos
 
-		
+		int basePointsByDifficulty = levelOfDifficulty.equals(LEVEL_OF_DIFFICULTY.EASY) ? 200 : 50;
 		// Sistema de puntuación básico
 		if (hasPlayerWon()) {
 			/*
-			 * Puntuación 
+			 * Puntuación
 			 * 
-			 * base + 
-			 * maxMovimientos - cantidad Movimientos  (maxMovimientos es 0 penaliza en caso contario suma)+ 
-			 * bonus por tamaño del tablero - 
-			 * penalización por movimientos inválidos
+			 * base + maxMovimientos - cantidad Movimientos (maxMovimientos es 0 penaliza en
+			 * caso contario suma)+ bonus por tamaño del tablero - penalización por
+			 * movimientos inválidos
 			 */
-			return Math.max(0, 1000 + (maxMovements - getMoveCount()) * 10 + boardSize * 50 - invalidMovements * 2);
+			
+			return Math.max(0, basePointsByDifficulty + 1000 + (maxMovements - getMoveCount()) * 10 + boardSize * 50 - invalidMovements * 2);
 		}
-		// Puntuación mínima si no ganó
-		return Math.max(0, 100 + (maxMovements - getMoveCount()) * 5 - invalidMovements * 2);
+		// Puntuación mínima si no ha ganado o perdió
+		return Math.max(0, basePointsByDifficulty + 100 + (maxMovements - getMoveCount()) * 5 - invalidMovements * 2);
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// calculateScore");
 	}
@@ -231,21 +254,20 @@ public class HexGameState extends GameState<HexPosition> {
 		// Debe incluir toda la información necesaria para restaurar el juego
 		// Considerar usar Map, JSON, o clase personalizada
 		// Incluir: gameId, catPosition, blockedCells, status, moveCount, etc.
-		
-		
-		
-//        Map<String, Object> state = new HashMap<>();
-//        state.put("gameId", getGameId());
-//        state.put("catPosition", Map.of("q", catPosition.getQ(), "r", catPosition.getR()));
-//        state.put("blockedCells", gameBoard.getBlockedPositions());
-//        state.put("status", getStatus().toString());
-//        state.put("moveCount", getMoveCount());
-//        state.put("invalidMovements", getInvalidMovements());
-//        state.put("maxMovements", getMaxMovements());
-//        state.put("boardSize", boardSize);
-        return JsonUtils.toJson(this);
-		
-		// throw new UnsupportedOperationException("Los estudiantes deben implementar getSerializableState");
+
+        Map<String, Object> state = new HashMap<>();
+        state.put("gameId", getGameId());
+        state.put("catPosition", Map.of("q", catPosition.getQ(), "r", catPosition.getR()));
+        state.put("blockedCells", gameBoard.getBlockedPositions());
+        state.put("status", getStatus().toString());
+        state.put("moveCount", getMoveCount());
+        state.put("invalidMovements", getInvalidMovements());
+        state.put("maxMovements", getMaxMovements());
+        state.put("boardSize", boardSize);
+		return state; //sonUtils.toJson(this);
+
+		// throw new UnsupportedOperationException("Los estudiantes deben implementar
+		// getSerializableState");
 	}
 
 	@Override
@@ -253,60 +275,58 @@ public class HexGameState extends GameState<HexPosition> {
 		// TODO: Restaurar el estado desde una representación serializada
 		// Debe ser compatible con getSerializableState()
 		// Manejar errores y validar la integridad de los datos
-		
-        if (serializedState instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> state = (Map<String, Object>) serializedState;
-            
-            String id = (String) state.get("gameId");
-            if(id == null || !id.equals(this.gameId))
-            	/*
-            	 * E.OSORIO.
-            	 * 
-            	 * No está grabado el ID o no es el mismo Juego
-            	 */
-            	return;
-            // Restaurar posición del gato
-            @SuppressWarnings("unchecked")
-            Map<String, Integer> catPos = (Map<String, Integer>) state.get("catPosition");
-            if (catPos != null) {
-                this.catPosition = new HexPosition(catPos.get("q"), catPos.get("r"));
-            }
-            
-            // Restaurar estado del juego
-            String statusStr = (String) state.get("status");
-            if (statusStr != null) {
-                setStatus(GameStatus.valueOf(statusStr));
-            }
-            
-            
-            String moveCountStr = (String) state.get("moveCount");
-            if (moveCountStr != null) {
-                moveCount = Integer.parseInt(moveCountStr);
-            }
-            String invalidMovementsStr = (String) state.get("invalidMovements");
-            if (moveCountStr != null) {
-                setInvalidMovements(Integer.parseInt(invalidMovementsStr));
-            }
-            
-        }
-        else if(serializedState instanceof String) {
-        	// Se asume que es un JSON
-        	
-        	HexGameState state = JsonUtils.fromJson((String)serializedState, HexGameState.class);
-        	if(state != null) {
-        		if(!state.getGameId().equals(this.getGameId()))
-        		{
-        			// No corresponde a este juego la serialización, por lo tanto descartamos.
-        			return;
-        		}
-        		this.catPosition = state.catPosition;
-        		this.status = state.status;
-        		this.moveCount =  state.moveCount;
-        		this.invalidMovements = state.invalidMovements;
-        	}
-        }
-		//throw new UnsupportedOperationException("Los estudiantes deben implementar restoreFromSerializable");
+
+		if (serializedState instanceof Map) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> state = (Map<String, Object>) serializedState;
+
+			String id = (String) state.get("gameId");
+			if (id == null || !id.equals(this.gameId))
+				/*
+				 * E.OSORIO.
+				 * 
+				 * No está grabado el ID o no es el mismo Juego
+				 */
+				return;
+			// Restaurar posición del gato
+			@SuppressWarnings("unchecked")
+			Map<String, Integer> catPos = (Map<String, Integer>) state.get("catPosition");
+			if (catPos != null) {
+				this.catPosition = new HexPosition(catPos.get("q"), catPos.get("r"));
+			}
+
+			// Restaurar estado del juego
+			String statusStr = (String) state.get("status");
+			if (statusStr != null) {
+				setStatus(GameStatus.valueOf(statusStr));
+			}
+
+			String moveCountStr = (String) state.get("moveCount");
+			if (moveCountStr != null) {
+				moveCount = Integer.parseInt(moveCountStr);
+			}
+			String invalidMovementsStr = (String) state.get("invalidMovements");
+			if (moveCountStr != null) {
+				setInvalidMovements(Integer.parseInt(invalidMovementsStr));
+			}
+
+		} else if (serializedState instanceof String) {
+			// Se asume que es un JSON
+
+			HexGameState state = JsonUtils.fromJson((String) serializedState, HexGameState.class);
+			if (state != null) {
+				if (!state.getGameId().equals(this.getGameId())) {
+					// No corresponde a este juego la serialización, por lo tanto descartamos.
+					return;
+				}
+				this.catPosition = state.catPosition;
+				this.status = state.status;
+				this.moveCount = state.moveCount;
+				this.invalidMovements = state.invalidMovements;
+			}
+		}
+		// throw new UnsupportedOperationException("Los estudiantes deben implementar
+		// restoreFromSerializable");
 	}
 
 	// Métodos auxiliares que los estudiantes pueden implementar
@@ -334,7 +354,15 @@ public class HexGameState extends GameState<HexPosition> {
 	 * eficiencia, estrategia, etc.
 	 */
 	public Map<String, Object> getAdvancedStatistics() {
-		throw new UnsupportedOperationException("Método adicional para implementar");
+		Map<String, Object> state = new HashMap<>();
+		state.put("status", getStatus().toString());
+		state.put("moveCount", getMoveCount());
+		state.put("invalidMovements", getInvalidMovements());
+		state.put("maxMovements", getMaxMovements());
+		state.put("boardSize", boardSize);
+		state.put("points", points);
+		return state;
+		//throw new UnsupportedOperationException("Método adicional para implementar");
 	}
 
 	// Getters adicionales que pueden ser útiles
@@ -366,4 +394,57 @@ public class HexGameState extends GameState<HexPosition> {
 	}
 	// TODO: Los estudiantes pueden agregar más métodos según necesiten
 	// Ejemplos: getDifficulty(), getTimeElapsed(), getPowerUps(), etc.
+
+	public LocalDateTime getFinishedAt() {
+		return finishedAt;
+	}
+
+	public void setFinishedAt(LocalDateTime finishedAt) {
+		this.finishedAt = finishedAt;
+		this.updateGameStatus();
+	}
+
+	public String getPlayerId() {
+		return playerId;
+	}
+
+	public void setPlayerId(String playerId) {
+		this.playerId = playerId;
+	}
+
+	public LocalDateTime getPauseddAt() {
+		return pauseddAt;
+	}
+
+	public void togglePause() {
+		// No corresponde aplicar esta operación
+		if (!getStatus().equals(GameStatus.IN_PROGRESS) && !getStatus().equals(GameStatus.PAUSED))
+			return;
+
+		if (getStatus().equals(GameStatus.IN_PROGRESS))
+			setStatus(GameStatus.PAUSED);
+		else
+			setStatus(GameStatus.IN_PROGRESS);
+
+		this.pauseddAt = LocalDateTime.now();
+		
+		notifyStateChanged();
+	}
+
+	public LEVEL_OF_DIFFICULTY getLevelOfDifficulty() {
+		return levelOfDifficulty;
+	}
+
+	public void setLevelOfDifficulty(LEVEL_OF_DIFFICULTY levelOfDifficulty) {
+		this.levelOfDifficulty = levelOfDifficulty;
+		this.updateGameStatus();
+	}
+
+	public int getPoints() {
+		return points;
+	}
+
+	public void setPoints(int points) {
+		this.points = points;
+	}
 }

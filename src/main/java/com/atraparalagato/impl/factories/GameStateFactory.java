@@ -13,7 +13,6 @@ public class GameStateFactory  implements Function<String, GameState<HexPosition
 
 	@Override
 	public GameState<HexPosition> apply(String gameId) {
-		// TODO Auto-generated method stub
 		return new HexGameState(gameId);
 	}
 }

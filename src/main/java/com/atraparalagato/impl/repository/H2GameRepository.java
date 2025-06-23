@@ -39,34 +39,7 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 
 	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
 	
-	public static class HexGameStateRowMapper implements RowMapper<GameState<HexPosition>> {
-	    @Override
-	    public GameState<HexPosition> mapRow(ResultSet rs, int rowNum) throws SQLException {
-			HexPosition catPosition = new HexPosition(rs.getInt("CAT_POSITION_Q"), rs.getInt("CAT_POSITION_R"));
 
-			String gameId = rs.getString("ID");
-			int boardSize = rs.getInt("BOARD_SIZE");
-			int invalidMovementes = rs.getInt("INVALID_MOVEMENTS");
-			int maxMovements = rs.getInt("MAX_MOVEMENTES");
-			int moveCount = rs.getInt("MOVE_COUNT");
-			
-			/*
-			 * El estado se calcula con los datos
-			 */
-			// GameStatus status = GameStatus.valueOf(rs.getString("STATUS"));
-			
-			/*
-			 * La fecha se crea cuando se instancia el HexGameState 
-			 */
-			// LocalDateTime date = rs.getTimestamp("CREATED_AT").toLocalDateTime();
-
-			HexGameState gameState = new HexGameState(gameId, boardSize, maxMovements);
-			gameState.setCatPosition(catPosition);
-			gameState.setInvalidMovements(invalidMovementes);
-			gameState.setMoveCount(moveCount);
-			return gameState;
-	    }
-	}
 
 	// TODO: Los estudiantes deben definir la configuración de la base de datos
 	// Ejemplos: DataSource, JdbcTemplate, EntityManager, etc.
@@ -81,7 +54,8 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 		// TODO: Inicializar conexión a H2 y crear tablas si no existen
 		// Pista: Usar spring.datasource.url configurado en application.properties
 		this.jdbcTemplate = jdbcTemplate;
-		this.transactionTemplate = new TransactionTemplate(transactionManager);;
+		this.transactionTemplate = new TransactionTemplate(transactionManager);
+		initialize();
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar el
 		// constructor");
 	}
@@ -97,12 +71,39 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 		// 5. Llamar hooks beforeSave/afterSave
 
 		HexGameState gameState = (HexGameState) entity;
-
-		String sql = "MERGE INTO GAMESSTATES VALUES (? ,? ,? ,? ,?, ?, ?, ?, ? )";
-		jdbcTemplate.update(sql, gameState.getGameId(), gameState.getGameId(), gameState.getCatPosition().getQ(),
-				gameState.getCatPosition().getR(), gameState.getBoardSize(), gameState.getInvalidMovements(),
-				gameState.getMaxMovements(), gameState.getMoveCount(), gameState.getStatus().name(),
-				gameState.getCreatedAt().format(DATE_TIME_FORMATTER));
+		/*
+        ID VARCHAR(255) PRIMARY KEY,
+        CAT_POSITION_Q INT,
+        CAT_POSITION_R INT,
+        BOARD_SIZE INT,
+        INVALID_MOVEMENTS INT,
+        MAX_MOVEMENTES INT,
+        MOVE_COUNT INT,
+        STATUS VARCHAR(255),
+        CREATED_AT TIMESTAMP,
+        PLAYER VARCHAR(255),
+        FINISHED_AT TIMESTAMP,
+        PAUSED_AT TIMESTAMP,
+        LEVEL_OF_DIFFICULTY VARCHAR(30)
+		*/
+		String sql = "MERGE INTO GAMESSTATES VALUES (? ,? ,? ,? ,?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		
+		String finishedAt = gameState.getFinishedAt() == null ? null : gameState.getFinishedAt().format(DATE_TIME_FORMATTER);
+		String pausedAt = gameState.getPauseddAt() == null ? null : gameState.getPauseddAt().format(DATE_TIME_FORMATTER);
+		jdbcTemplate.update(sql, 
+				gameState.getGameId(), 
+				gameState.getCatPosition().getQ(),
+				gameState.getCatPosition().getR(), 
+				gameState.getBoardSize(), 
+				gameState.getInvalidMovements(),
+				gameState.getMaxMovements(), 
+				gameState.getMoveCount(), 
+				gameState.getStatus().name(),
+				gameState.getCreatedAt().format(DATE_TIME_FORMATTER), 
+				gameState.getPlayerId(), 
+				finishedAt, 
+				pausedAt, 
+				gameState.getLevelOfDifficulty().name());
 		return gameState;
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// save");
@@ -117,7 +118,7 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 		// 3. Deserializar estado del juego
 		// 4. Retornar Optional.empty() si no existe
 
-		String sql = "SELECT DATA FROM GAMESSTATES WHERE ID = ?";
+		String sql = "SELECT * FROM GAMESSTATES WHERE ID = ?";
 		try {
 			GameState<HexPosition> state = jdbcTemplate.queryForObject(sql, new Object[] { id }, rowMapper);
 			return Optional.ofNullable(state);
@@ -355,11 +356,15 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 				        MAX_MOVEMENTES INT,
 				        MOVE_COUNT INT,
 				        STATUS VARCHAR(255),
-				        CREATED_AT DATE
+				        CREATED_AT TIMESTAMP,
+				        PLAYER VARCHAR(255),
+				        FINISHED_AT TIMESTAMP,
+				        PAUSED_AT TIMESTAMP,
+				        LEVEL_OF_DIFFICULTY VARCHAR(30)
 				    )
 				""");
-		jdbcTemplate.execute("CREATE INDEX STATUS_IDX ON GAMESSTATES(STATUS)");
-		jdbcTemplate.execute("CREATE INDEX CREATED_AT_IDX ON GAMESSTATES(CREATED_AT)");
+		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS STATUS_IDX ON GAMESSTATES(STATUS)");
+		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS CREATED_AT_IDX ON GAMESSTATES(CREATED_AT)");
 		// throw new UnsupportedOperationException("Método auxiliar para implementar");
 	}
 
@@ -367,11 +372,9 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 	 * TODO: Serializar HexGameState a formato de BD. Puede usar JSON, XML, o campos
 	 * separados.
 	 */
+	@SuppressWarnings("unused")
 	private String serializeGameState(HexGameState gameState) {
-		return String.format("'%s',%d,%d,%d,%d,%d,%d,'%s','%s'", gameState.getGameId(),
-				gameState.getCatPosition().getQ(), gameState.getCatPosition().getR(), gameState.getBoardSize(),
-				gameState.getInvalidMovements(), gameState.getMaxMovements(), gameState.getMoveCount(),
-				gameState.getStatus().name(), gameState.getCreatedAt().format(DATE_TIME_FORMATTER));
+		return JsonUtils.toJson(gameState);
 		// throw new UnsupportedOperationException("Método auxiliar para implementar");
 	}
 
@@ -379,6 +382,7 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 	 * TODO: Deserializar desde formato de BD a HexGameState. Debe ser compatible
 	 * con serializeGameState.
 	 */
+	@SuppressWarnings("unused")
 	private HexGameState deserializeGameState(String serializedData, String gameId) {
 		HexGameState state = JsonUtils.fromJson(serializedData, HexGameState.class);
 		return state != null && state.getGameId().equals(gameId) ? state : null;
@@ -389,6 +393,7 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 	 * TODO: Convertir Predicate a cláusula WHERE SQL. Implementación avanzada
 	 * opcional.
 	 */
+	@SuppressWarnings("unused")
 	private String predicateToSql(Predicate<HexGameState> predicate) {
 		throw new UnsupportedOperationException("Método auxiliar avanzado para implementar");
 	}

@@ -47,6 +47,7 @@ public class GameController {
                 return startGameWithStudentImplementation(boardSize);
             }
         } catch (Exception e) {
+        	e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Error al iniciar el juego: " + e.getMessage()));
         }
@@ -221,19 +222,21 @@ public class GameController {
     
     private ResponseEntity<Map<String, Object>> blockPositionWithStudentImplementation(String gameId, HexPosition position) {
         // TODO: Los estudiantes deben implementar esto usando sus propias clases
-        return ResponseEntity.ok(Map.of(
-            "error", "Student implementation not available yet",
-            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",
-            "implementation", "impl"
-        ));
+    	return ResponseEntity.ok(Map.of("message", hexGameService.executePlayerMove(gameId, position)));
+//        return ResponseEntity.ok(Map.of(
+//            "error", "Student implementation not available yet",
+//            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",
+//            "implementation", "impl"
+//        ));
     }
     
     private ResponseEntity<Map<String, Object>> getGameStateWithStudentImplementation(String gameId) {
         // TODO: Los estudiantes deben implementar esto usando sus propias clases
-        return ResponseEntity.ok(Map.of(
-            "error", "Student implementation not available yet",
-            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",
-            "implementation", "impl"
-        ));
+    	return ResponseEntity.ok(Map.of("message", hexGameService.obtainGameStatus(gameId)));
+//        return ResponseEntity.ok(Map.of(
+//            "error", "Student implementation not available yet",
+//            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",
+//            "implementation", "impl"
+//        ));
     }
 } 
