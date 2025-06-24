@@ -109,7 +109,17 @@ public class HexGameService extends GameService<HexPosition> {
 		// createGame");
 	}
 
-	public Optional<String> obtainGameStatus(String gameId) {
+	/**
+	 * Graba el gameState actualizándolo
+	 */
+	public HexGameState saveGameState(HexGameState gameState) {
+
+		GameState<HexPosition> savedState = persistGameState(gameState);
+		onGameStarted(savedState);
+		return (HexGameState) savedState;
+	}
+
+	public Optional<HexGameState> obtainGameStatus(String gameId) {
 		Optional<GameState<HexPosition>> gameStateOpt = super.loadGameState(gameId);
 
 		if (gameStateOpt.isEmpty()) {
@@ -119,7 +129,7 @@ public class HexGameService extends GameService<HexPosition> {
 		// El juego existe
 		HexGameState gameState = (HexGameState) gameStateOpt.get();
 
-		return Optional.of(gameState.getStatus().name());
+		return Optional.of(gameState);
 	}
 
 	/**
@@ -235,24 +245,24 @@ public class HexGameService extends GameService<HexPosition> {
 		}
 		String myDifficult = difficulty;
 		HexGameState gameState = (HexGameState) gameStateOpt.get();
-		if(difficulty == null)
-		{
+		if (difficulty == null) {
 			myDifficult = gameState.getLevelOfDifficulty().name();
 		}
-		
-		CatMovementStrategy<HexPosition>strategy = createMovementStrategy(myDifficult, gameState.getGameBoard());
-		
+
+		CatMovementStrategy<HexPosition> strategy = createMovementStrategy(myDifficult, gameState.getGameBoard());
+
 		HexPosition targetPosition = getTargetPosition(gameState);
-		
-		if(targetPosition == null)
+
+		if (targetPosition == null)
 			return Optional.empty();
-		
+
 		HexPosition catPosition = gameState.getCatPosition();
-		
+
 		Optional<HexPosition> result = strategy.findBestMove(catPosition, targetPosition);
-		
+
 		return result;
-		//throw new UnsupportedOperationException("Los estudiantes deben implementar getIntelligentSuggestion");
+		// throw new UnsupportedOperationException("Los estudiantes deben implementar
+		// getIntelligentSuggestion");
 	}
 
 	/**
@@ -403,6 +413,7 @@ public class HexGameService extends GameService<HexPosition> {
 	/**
 	 * TODO: Obtener ranking de mejores puntuaciones.
 	 */
+	@SuppressWarnings("unchecked")
 	public List<Map<String, Object>> getLeaderboard(int limit) {
 		// TODO: Generar tabla de líderes
 		// Incluir:
@@ -411,20 +422,56 @@ public class HexGameService extends GameService<HexPosition> {
 		// 3. Fecha de la partida
 		// 4. Detalles de la partida
 
-		String query = "SELECT * FROM GAMESSTATES  WHERE STATUS IN ( 'PLAYER_WON', 'PLAYER_LOST' ) ORDER BY POINTS LIMIT " + limit;
+		String query = "SELECT * FROM GAMESSTATES  WHERE STATUS IN ( 'PLAYER_WON', 'PLAYER_LOST' ) ORDER BY POINTS LIMIT "
+				+ limit;
 		Function<Object, HexGameState> mapper = row -> {
 			return (HexGameState) row;
 		};
 
 		List<HexGameState> results = gameRepository.executeCustomQuery(query, mapper);
-		return results.stream().map(r -> Map.of("gameId", r.getGameId(), "Puntuación", r.getPoints(), "Jugador",
-				r.getPlayerId(), "Fecha Partida", r.getCreatedAt(), "Detalle Juego",
-				Map.of("Tamaño Tablero", r.getBoardSize(), "Posición Gato", r.getCatPosition(), "Estado del Juego",
-						r.getStatus(), "Dificultad", r.getLevelOfDifficulty(), "Fecha fin Juego", r.getFinishedAt())))
-				.toList();
+		return results.stream().map(r -> (Map<String, Object>)r.getSerializableState()).toList();
 
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// getLeaderboard");
+	}
+	
+	
+	/**
+	 * Obtiene el juego asociado al gameId
+	 * @param gameId Identificador del juego
+	 * @return Un opcional con el contenido del juego.
+	 */
+	public Optional<HexGameState> getGame(String gameId) {
+		var result = gameRepository.findById(gameId);
+		if(result.isEmpty())
+			return Optional.empty();
+		return  Optional.of((HexGameState)result.get());
+	}
+
+	/**
+	 * Obtiene todos los juegos.
+	 */
+	public List<HexGameState> getAllGames() {
+		var result = gameRepository.findAll();
+		return result.stream().map(h -> (HexGameState) h).toList();
+	}
+
+	/**
+	 * Obtiene juegos terminados.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Map<String, Object>> getFinishedGames() {
+		var results = gameRepository.findWhere(game -> game.isGameFinished());
+		return results.stream().map(r -> (Map<String, Object>)r.getSerializableState()).toList();
+	}
+
+	/**
+	 * Obtiene juegos ganados.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Map<String, Object>> getWonGames() {
+		var results = gameRepository.findWhere(game -> game.hasPlayerWon());
+		return results.stream().map(r -> (Map<String, Object>)r.getSerializableState()).toList();
 	}
 
 	// Métodos auxiliares que los estudiantes pueden implementar
@@ -487,8 +534,8 @@ public class HexGameService extends GameService<HexPosition> {
 	 * TODO: Notificar eventos del juego.
 	 */
 	private void notifyGameEvent(String gameId, String eventType, Map<String, Object> eventData) {
-		//throw new UnsupportedOperationException("Método auxiliar para implementar");
-		
+		// throw new UnsupportedOperationException("Método auxiliar para implementar");
+
 		LOG.info(String.format("Juego: %s Evento: %s Datos:%s", gameId, eventType, eventData));
 	}
 
@@ -512,6 +559,7 @@ public class HexGameService extends GameService<HexPosition> {
 		// TODO: Inicializar el juego con estado y tablero
 
 		HexGameState hexGameState = (HexGameState) gameState;
+		hexGameState.setGameBoard((HexGameBoard) gameBoard);
 		hexGameState.setCatPosition(new HexPosition(0, 0));
 
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
@@ -579,7 +627,7 @@ public class HexGameService extends GameService<HexPosition> {
 	@Override
 	public Object getGameStatistics(String gameId) {
 		// TODO: Obtener estadísticas del juego
-		
+
 		Optional<GameState<HexPosition>> gameStateOpt = super.loadGameState(gameId);
 		if (gameStateOpt.isEmpty()) {
 			// Se retora un Optiona vacío
@@ -588,15 +636,16 @@ public class HexGameService extends GameService<HexPosition> {
 		// El juego existe
 		HexGameState gameState = (HexGameState) gameStateOpt.get();
 		return gameState.getAdvancedStatistics();
-		
-		//throw new UnsupportedOperationException("Los estudiantes deben implementar getGameStatistics");
+
+		// throw new UnsupportedOperationException("Los estudiantes deben implementar
+		// getGameStatistics");
 	}
 
 	protected void executeCatMove(GameState<HexPosition> gameState) {
 		HexPosition currentPosition = gameState.getCatPosition();
 		HexPosition targetPosition = getTargetPosition(gameState);
 
-		HexGameState hexGameState = (HexGameState)gameState;
+		HexGameState hexGameState = (HexGameState) gameState;
 		var strategy = createMovementStrategy(hexGameState.getLevelOfDifficulty().name(), hexGameState.getGameBoard());
 		Optional<HexPosition> nextMove = strategy.findBestMove(currentPosition, targetPosition);
 
@@ -605,7 +654,7 @@ public class HexGameService extends GameService<HexPosition> {
 			onCatMoved(gameState, nextMove.get());
 		}
 	}
-	
+
 	// Event handlers - Hook methods para extensibilidad
 	protected void onGameStarted(GameState<HexPosition> gameState) {
 		// Default: no operation

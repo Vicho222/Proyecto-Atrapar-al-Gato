@@ -1,5 +1,6 @@
 package com.atraparalagato.impl.model;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class HexGameState extends GameState<HexPosition> {
 	public final static int DEFAULT_BOARD_SIZE = 11;
 	private HexPosition catPosition;
 	private HexGameBoard gameBoard;
-	private final int boardSize;
+	private int boardSize;
 	private LocalDateTime finishedAt;
 	private String playerId;
 	private LocalDateTime pausedAt;
@@ -201,7 +202,7 @@ public class HexGameState extends GameState<HexPosition> {
 		 * 
 		 * Finaliza cuando ha ganado el gato o el jugador.
 		 */
-		return !getStatus().equals(GameStatus.IN_PROGRESS);
+		return !getStatus().equals(GameStatus.IN_PROGRESS) && getStatus().equals(GameStatus.PAUSED);
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// isGameFinished");
 	}
@@ -260,10 +261,19 @@ public class HexGameState extends GameState<HexPosition> {
         state.put("catPosition", Map.of("q", catPosition.getQ(), "r", catPosition.getR()));
         state.put("blockedCells", gameBoard.getBlockedPositions());
         state.put("status", getStatus().toString());
-        state.put("moveCount", getMoveCount());
+        state.put("movesCount", getMoveCount());
         state.put("invalidMovements", getInvalidMovements());
         state.put("maxMovements", getMaxMovements());
         state.put("boardSize", boardSize);
+        state.put("playerWon", getStatus().equals(GameStatus.PLAYER_WON));
+        state.put("playerName", getPlayerId() == null ? "NN": getPlayerId());
+        
+        long gameDurationSeconds = 0;
+        if(getFinishedAt() != null)
+        {
+        	gameDurationSeconds = Duration.between(getCreatedAt(), getFinishedAt()).getSeconds();
+        }
+        state.put("gameDurationSeconds", gameDurationSeconds);
 		return state; //sonUtils.toJson(this);
 
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
@@ -375,6 +385,11 @@ public class HexGameState extends GameState<HexPosition> {
 
 	public HexGameBoard getGameBoard() {
 		return gameBoard;
+	}
+
+	public void setGameBoard(HexGameBoard gameBoard) {
+		this.gameBoard = gameBoard;
+		this.boardSize = gameBoard.getSize();
 	}
 
 	public int getBoardSize() {

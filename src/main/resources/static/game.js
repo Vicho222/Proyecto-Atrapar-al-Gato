@@ -362,6 +362,7 @@ const createScoreRenderer = (containerId) => (scores) => {
 // Global functions for score management
 async function showHighScores() {
     const section = document.getElementById('high-score-section');
+	section.scrollIntoView();
     section.style.display = 'block';
     await showScoreTab('top'); // Show top scores by default
 }
@@ -373,6 +374,7 @@ function hideHighScores() {
 
 async function showScoreTab(tabType) {
     // Update active tab
+	
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
     event?.target?.classList.add('active') || 
         document.querySelector(`[onclick="showScoreTab('${tabType}')"]`)?.classList.add('active');
