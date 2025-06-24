@@ -1,7 +1,6 @@
 package com.atraparalagato.impl.repository;
 
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,6 +22,7 @@ import com.atraparalagato.base.model.GameState;
 import com.atraparalagato.base.repository.DataRepository;
 import com.atraparalagato.impl.JsonUtils;
 import com.atraparalagato.impl.model.HexGameState;
+import com.atraparalagato.impl.model.HexGameUtil;
 import com.atraparalagato.impl.model.HexPosition;
 
 /**
@@ -75,13 +75,9 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 		
 
 		Set<HexPosition> bloquedPos = gameState.getGameBoard().getBlockedPositions();
-		String bloquedCells = "";
-		if(bloquedPos != null)
-			bloquedCells = JsonUtils.toJson(bloquedPos == null ? Collections.emptySet() : bloquedPos);
-		
-		
+		String bloquedCells = HexGameUtil.serializeHexPositions(bloquedPos);
 		String finishedAt = gameState.getFinishedAt() == null ? null : gameState.getFinishedAt().format(DATE_TIME_FORMATTER);
-		String pausedAt = gameState.getPauseddAt() == null ? null : gameState.getPauseddAt().format(DATE_TIME_FORMATTER);
+		String pausedAt = gameState.getPausedAt() == null ? null : gameState.getPausedAt().format(DATE_TIME_FORMATTER);
 		jdbcTemplate.update(sql, 
 				gameState.getGameId(), 
 				gameState.getCatPosition().getQ(),

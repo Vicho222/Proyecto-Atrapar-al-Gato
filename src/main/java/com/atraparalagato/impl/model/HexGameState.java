@@ -29,7 +29,7 @@ public class HexGameState extends GameState<HexPosition> {
 	private final int boardSize;
 	private LocalDateTime finishedAt;
 	private String playerId;
-	private LocalDateTime pauseddAt;
+	private LocalDateTime pausedAt;
 	
 	private int points;
 	/**
@@ -367,6 +367,7 @@ public class HexGameState extends GameState<HexPosition> {
 		state.put("maxMovements", getMaxMovements());
 		state.put("boardSize", boardSize);
 		state.put("points", points);
+		state.put("Celdas bloqueadas", getGameBoard().getBlockedPositions());
 		return state;
 		//throw new UnsupportedOperationException("Método adicional para implementar");
 	}
@@ -422,8 +423,12 @@ public class HexGameState extends GameState<HexPosition> {
 		this.playerId = playerId;
 	}
 
-	public LocalDateTime getPauseddAt() {
-		return pauseddAt;
+	public LocalDateTime getPausedAt() {
+		return pausedAt;
+	}
+
+	public void setPausedAt(LocalDateTime pausedAt) {
+		this.pausedAt = pausedAt;
 	}
 
 	public void togglePause() {
@@ -436,10 +441,11 @@ public class HexGameState extends GameState<HexPosition> {
 		else
 			setStatus(GameStatus.IN_PROGRESS);
 
-		this.pauseddAt = LocalDateTime.now();
+		this.pausedAt = LocalDateTime.now();
 		
 		notifyStateChanged();
 	}
+	
 
 	public LEVEL_OF_DIFFICULTY getLevelOfDifficulty() {
 		return levelOfDifficulty;

@@ -581,7 +581,6 @@ public class HexGameService extends GameService<HexPosition> {
 		// TODO: Obtener estadísticas del juego
 		
 		Optional<GameState<HexPosition>> gameStateOpt = super.loadGameState(gameId);
-
 		if (gameStateOpt.isEmpty()) {
 			// Se retora un Optiona vacío
 			return null;

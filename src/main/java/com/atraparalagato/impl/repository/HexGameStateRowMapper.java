@@ -3,17 +3,16 @@ package com.atraparalagato.impl.repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.jdbc.core.RowMapper;
 
 import com.atraparalagato.base.model.GameState;
 import com.atraparalagato.base.model.GameState.GameStatus;
-import com.atraparalagato.impl.JsonUtils;
 import com.atraparalagato.impl.model.HexGameState;
 import com.atraparalagato.impl.model.HexGameState.LEVEL_OF_DIFFICULTY;
+import com.atraparalagato.impl.model.HexGameUtil;
 import com.atraparalagato.impl.model.HexPosition;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 public class HexGameStateRowMapper implements RowMapper<GameState<HexPosition>> {
 	@Override
@@ -33,12 +32,7 @@ public class HexGameStateRowMapper implements RowMapper<GameState<HexPosition>> 
 		LEVEL_OF_DIFFICULTY levlOfDifficulty = LEVEL_OF_DIFFICULTY.valueOf(rs.getString("LEVEL_OF_DIFFICULTY"));
 		
 		String bloquedCells = rs.getString("BLOQUED_CELLS");
-		HashSet<HexPosition> bloquedPositions = new HashSet<>();
-		TypeReference<HashSet<HexPosition>> typeReference;
-		if(bloquedCells != null && !bloquedCells.isBlank()) {
-			typeReference =  new TypeReference<HashSet<HexPosition>>() {};
-			bloquedPositions = JsonUtils.fromJson(bloquedCells, typeReference);
-		}
+		Set<HexPosition> bloquedPositions = HexGameUtil.deserializeHexPositions(bloquedCells);
 		
 
 		HexGameState gameState = new HexGameState(gameId, boardSize, maxMovements);
@@ -53,7 +47,7 @@ public class HexGameStateRowMapper implements RowMapper<GameState<HexPosition>> 
 		if (finishedAt != null)
 			gameState.setFinishedAt(finishedAt.toLocalDateTime());
 		if (pausedAt != null)
-			gameState.setFinishedAt(pausedAt.toLocalDateTime());
+			gameState.setPausedAt(pausedAt.toLocalDateTime());
 		gameState.getGameBoard().setBloquedPositions(bloquedPositions);
 		
 		return gameState;

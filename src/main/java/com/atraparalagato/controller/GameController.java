@@ -1,5 +1,6 @@
 package com.atraparalagato.controller;
 
+import com.atraparalagato.base.model.GameState;
 import com.atraparalagato.example.service.ExampleGameService;
 import com.atraparalagato.impl.model.HexPosition;
 import com.atraparalagato.impl.service.HexGameService;
@@ -121,9 +122,10 @@ public class GameController {
                 Map<String, Object> stats = exampleGameService.getGameStatistics(gameId);
                 return ResponseEntity.ok(stats);
             } else {
-                return ResponseEntity.ok(Map.of("message", 
-                		hexGameService.getGameStatistics(gameId)
-                		));
+            	Object result = hexGameService.getGameStatistics(gameId);
+            	if(result == null)
+            		return ResponseEntity.ok(Map.of("message", "No se encuentra el juego:"  + gameId));
+                return ResponseEntity.ok(Map.of("message", result));
             }
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
@@ -246,7 +248,8 @@ public class GameController {
     
     private ResponseEntity<Map<String, Object>> blockPositionWithStudentImplementation(String gameId, HexPosition position) {
         // TODO: Los estudiantes deben implementar esto usando sus propias clases
-    	return ResponseEntity.ok(Map.of("message", hexGameService.executePlayerMove(gameId, position)));
+    	Optional<GameState<HexPosition>> result = hexGameService.executePlayerMove(gameId, position);
+    	return ResponseEntity.ok(Map.of("message", result.get()));
 //        return ResponseEntity.ok(Map.of(
 //            "error", "Student implementation not available yet",
 //            "message", "Los estudiantes deben completar sus implementaciones en el paquete 'impl'",

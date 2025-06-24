@@ -14,6 +14,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 public class JsonUtils {
+	
+	
+	
 	private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	public static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule()) // para soporte de fechas Java 8
