@@ -102,4 +102,5 @@ public abstract class GameBoard<T extends Position> {
     public final Set<T> getBlockedPositions() {
         return Set.copyOf(blockedPositions);
     }
+  
 } 

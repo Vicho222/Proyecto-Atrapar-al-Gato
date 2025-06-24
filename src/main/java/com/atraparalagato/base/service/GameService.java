@@ -82,6 +82,8 @@ public abstract class GameService<T extends Position> {
 		if (!gameState.executeMove(position)) {
 			return Optional.of(gameState);
 		}
+		
+		
 
 		// Mover el gato después del movimiento del jugador
 		executeCatMove(gameState);

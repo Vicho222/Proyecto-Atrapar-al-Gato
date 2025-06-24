@@ -166,7 +166,7 @@ public abstract class GameState<T extends Position> {
 		this.moveCount++;
 	}
 
-	protected final void setStatus(GameStatus status) {
+	public final void setStatus(GameStatus status) {
 		this.status = status;
 	}
 

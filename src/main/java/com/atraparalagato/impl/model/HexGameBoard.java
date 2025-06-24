@@ -63,8 +63,8 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 		// Considerar si necesita validación adicional
 
 		/*
-		 * E.OSORIO
-		 * Se agrega la posición a la lista de bloqueados si es valido el movimiento.
+		 * E.OSORIO Se agrega la posición a la lista de bloqueados si es valido el
+		 * movimiento.
 		 */
 		if (isValidMove(position))
 			blockedPositions.add(position);
@@ -126,14 +126,14 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 	}
 
 	/**
-	 * E.OSORIO
-	 * Verifica si la posición está en el borde del tablero. El borde son las
-	 * posiciones donde el gato puede escapar. El jugador no puede seleccionar el
-	 * borde
+	 * E.OSORIO Verifica si la posición está en el borde del tablero. El borde son
+	 * las posiciones donde el gato puede escapar. El jugador no puede seleccionar
+	 * el borde
 	 */
 	public boolean isAtBorder(HexPosition position) {
-		return Math.abs(position.getQ()) == size || Math.abs(position.getR()) == size
-				|| Math.abs(position.getS()) == size;
+		int localSize = size - 1;
+		return Math.abs(position.getQ()) == localSize || Math.abs(position.getR()) == localSize
+				|| Math.abs(position.getS()) == localSize;
 	}
 
 	// Método auxiliar que los estudiantes pueden implementar
@@ -144,9 +144,8 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 
 		List<HexPosition> elements = new ArrayList<>();
 		/*
-		 * E.OSORIO
-		 * Se asegura que q y r no tomen el borde, pero no se sabe si al calcular el s
-		 * va a estar dentro del los límites.
+		 * E.OSORIO Se asegura que q y r no tomen el borde, pero no se sabe si al
+		 * calcular el s va a estar dentro del los límites.
 		 */
 		for (int q = (-size + 1); q < size; q++) {
 			for (int r = (-size + 1); r < size; r++) {
@@ -154,8 +153,7 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 			}
 		}
 		/*
-		 * E.OSORIO
-		 * Filtra todas las posiciones válidas y que no estén en el borde
+		 * E.OSORIO Filtra todas las posiciones válidas y que no estén en el borde
 		 */
 		return elements.stream().filter(p -> isPositionInBounds(p) && !isAtBorder(p)).collect(Collectors.toList());
 		// throw new UnsupportedOperationException("Método auxiliar para implementar");
@@ -167,5 +165,15 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 		// TODO: Los estudiantes pueden agregar lógica adicional aquí
 		// Ejemplos: logging, notificaciones, validaciones post-movimiento
 		super.onMoveExecuted(position);
+	}
+
+	/**
+	 * Para poder establecer los puntos bloqueados en la recuperación.
+	 * 
+	 * @param bloquedPosition Set de puntos a agregar.
+	 */
+	public void setBloquedPositions(Set<HexPosition> bloquedPosition) {
+		this.blockedPositions.clear();
+		this.blockedPositions.addAll(Set.copyOf(bloquedPosition));
 	}
 }

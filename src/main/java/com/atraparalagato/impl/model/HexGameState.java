@@ -3,9 +3,9 @@ package com.atraparalagato.impl.model;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.atraparalagato.base.model.GameState;
-import com.atraparalagato.impl.JsonUtils;
 
 /**
  * Implementación esqueleto de GameState para tableros hexagonales.
@@ -270,6 +270,7 @@ public class HexGameState extends GameState<HexPosition> {
 		// getSerializableState");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void restoreFromSerializable(Object serializedState) {
 		// TODO: Restaurar el estado desde una representación serializada
@@ -277,7 +278,6 @@ public class HexGameState extends GameState<HexPosition> {
 		// Manejar errores y validar la integridad de los datos
 
 		if (serializedState instanceof Map) {
-			@SuppressWarnings("unchecked")
 			Map<String, Object> state = (Map<String, Object>) serializedState;
 
 			String id = (String) state.get("gameId");
@@ -289,7 +289,6 @@ public class HexGameState extends GameState<HexPosition> {
 				 */
 				return;
 			// Restaurar posición del gato
-			@SuppressWarnings("unchecked")
 			Map<String, Integer> catPos = (Map<String, Integer>) state.get("catPosition");
 			if (catPos != null) {
 				this.catPosition = new HexPosition(catPos.get("q"), catPos.get("r"));
@@ -298,32 +297,39 @@ public class HexGameState extends GameState<HexPosition> {
 			// Restaurar estado del juego
 			String statusStr = (String) state.get("status");
 			if (statusStr != null) {
-				setStatus(GameStatus.valueOf(statusStr));
+				if(GameStatus.valueOf(statusStr) != null)
+					setStatus(GameStatus.valueOf(statusStr));
 			}
 
 			String moveCountStr = (String) state.get("moveCount");
 			if (moveCountStr != null) {
-				moveCount = Integer.parseInt(moveCountStr);
+				try {
+					moveCount = Integer.parseInt(moveCountStr);
+				} catch (Exception e) {
+					setMaxMovements(0);
+				}
 			}
 			String invalidMovementsStr = (String) state.get("invalidMovements");
-			if (moveCountStr != null) {
-				setInvalidMovements(Integer.parseInt(invalidMovementsStr));
-			}
-
-		} else if (serializedState instanceof String) {
-			// Se asume que es un JSON
-
-			HexGameState state = JsonUtils.fromJson((String) serializedState, HexGameState.class);
-			if (state != null) {
-				if (!state.getGameId().equals(this.getGameId())) {
-					// No corresponde a este juego la serialización, por lo tanto descartamos.
-					return;
+			if (invalidMovementsStr != null) {
+				try {
+					setInvalidMovements(Integer.parseInt(invalidMovementsStr));
+				} catch (Exception e) {
+					setInvalidMovements(0);
 				}
-				this.catPosition = state.catPosition;
-				this.status = state.status;
-				this.moveCount = state.moveCount;
-				this.invalidMovements = state.invalidMovements;
 			}
+			String maxMovements = (String) state.get("maxMovements");
+			if (maxMovements != null) {
+				try {
+					setMaxMovements(Integer.parseInt(maxMovements));
+				} catch (Exception e) {
+					setMaxMovements(0);
+				}
+			}
+			Set<HexPosition> blockedCells =  (Set<HexPosition>) state.get("blockedCells");
+			if (blockedCells != null) {
+				setBloquedPositions(blockedCells);
+			}
+
 		}
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// restoreFromSerializable");
@@ -388,6 +394,10 @@ public class HexGameState extends GameState<HexPosition> {
 		return maxMovements;
 	}
 
+	public void setMaxMovements(int maxMovements) {
+		this.maxMovements = maxMovements;
+	}
+
 	public void setMoveCount(int moveCount) {
 		super.moveCount = moveCount;
 		this.updateGameStatus();
@@ -447,4 +457,14 @@ public class HexGameState extends GameState<HexPosition> {
 	public void setPoints(int points) {
 		this.points = points;
 	}
+	
+	
+	/**
+	 * Método auxiliar para establecer el conjunto de puntos bloqueados.
+	 * @param bloquedPosition Conjunto de puntos bloqueados.
+	 */
+	public void setBloquedPositions(Set<HexPosition> bloquedPosition) {
+		this.gameBoard.setBloquedPositions(bloquedPosition);
+	}
+	
 }

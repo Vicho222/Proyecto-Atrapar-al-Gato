@@ -1,18 +1,18 @@
 package com.atraparalagato.impl.repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -71,22 +71,14 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 		// 5. Llamar hooks beforeSave/afterSave
 
 		HexGameState gameState = (HexGameState) entity;
-		/*
-        ID VARCHAR(255) PRIMARY KEY,
-        CAT_POSITION_Q INT,
-        CAT_POSITION_R INT,
-        BOARD_SIZE INT,
-        INVALID_MOVEMENTS INT,
-        MAX_MOVEMENTES INT,
-        MOVE_COUNT INT,
-        STATUS VARCHAR(255),
-        CREATED_AT TIMESTAMP,
-        PLAYER VARCHAR(255),
-        FINISHED_AT TIMESTAMP,
-        PAUSED_AT TIMESTAMP,
-        LEVEL_OF_DIFFICULTY VARCHAR(30)
-		*/
-		String sql = "MERGE INTO GAMESSTATES VALUES (? ,? ,? ,? ,?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		String sql = "MERGE INTO GAMESSTATES VALUES (? ,? ,? ,? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		
+
+		Set<HexPosition> bloquedPos = gameState.getGameBoard().getBlockedPositions();
+		String bloquedCells = "";
+		if(bloquedPos != null)
+			bloquedCells = JsonUtils.toJson(bloquedPos == null ? Collections.emptySet() : bloquedPos);
+		
 		
 		String finishedAt = gameState.getFinishedAt() == null ? null : gameState.getFinishedAt().format(DATE_TIME_FORMATTER);
 		String pausedAt = gameState.getPauseddAt() == null ? null : gameState.getPauseddAt().format(DATE_TIME_FORMATTER);
@@ -103,7 +95,8 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 				gameState.getPlayerId(), 
 				finishedAt, 
 				pausedAt, 
-				gameState.getLevelOfDifficulty().name());
+				gameState.getLevelOfDifficulty().name(),
+				bloquedCells);
 		return gameState;
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// save");
@@ -361,7 +354,8 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 				        PLAYER VARCHAR(255),
 				        FINISHED_AT TIMESTAMP,
 				        PAUSED_AT TIMESTAMP,
-				        LEVEL_OF_DIFFICULTY VARCHAR(30)
+				        LEVEL_OF_DIFFICULTY VARCHAR(30),
+				        BLOQUED_CELLS VARCHAR(255)
 				    )
 				""");
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS STATUS_IDX ON GAMESSTATES(STATUS)");
@@ -397,6 +391,12 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 	@SuppressWarnings("unused")
 	private String predicateToSql(Predicate<HexGameState> predicate) {
 		throw new UnsupportedOperationException("Método auxiliar avanzado para implementar");
+	}
+	
+	public static void main(String[] args) {
+		Set<String> set = new HashSet<>();
+		String json = JsonUtils.toJson(set);
+		System.out.println(json);
 	}
 	
 }

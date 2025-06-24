@@ -19,11 +19,12 @@ import java.util.Optional;
  * - true: Usa las implementaciones del paquete 'example' (básicas, para guía)
  * - false: Usa las implementaciones del paquete 'impl' (de los estudiantes)
  */
-@RestController
-@RequestMapping("/api/game")
-@CrossOrigin(origins = "*")
+@RestController // Hace que Springboot lo incie solo (Clase que atiende las llamadas REST)
+@RequestMapping("/api/game") // Prefijo de todas las llamadas REST
+@CrossOrigin(origins = "*") // Se pueden conectar desde cualquier computador
 public class GameController {
     
+	// Saca el valor desde el archivo application.properties
     @Value("${game.use-example-implementation:true}")
     private boolean useExampleImplementation;
     
@@ -75,6 +76,24 @@ public class GameController {
         }
     }
     
+    
+    /**
+     * Ejecuta un togglePause del juego.
+     */
+    @PostMapping("/togglepause")
+    public ResponseEntity<Map<String, Object>> togglePause(@RequestParam String gameId) {
+        try {
+            
+            if (useExampleImplementation) {
+                return ResponseEntity.ok(Map.of("error", "Error pause no implementado en el ejmplo."));
+            } else {
+                return ResponseEntity.ok(Map.of("message", hexGameService.toggleGamePause(gameId)));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error al ejecutar movimiento: " + e.getMessage()));
+        }
+    }
     /**
      * Obtiene el estado actual del juego.
      */
@@ -102,7 +121,9 @@ public class GameController {
                 Map<String, Object> stats = exampleGameService.getGameStatistics(gameId);
                 return ResponseEntity.ok(stats);
             } else {
-                return ResponseEntity.ok(Map.of("error", "Student implementation not available yet"));
+                return ResponseEntity.ok(Map.of("message", 
+                		hexGameService.getGameStatistics(gameId)
+                		));
             }
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
@@ -128,7 +149,10 @@ public class GameController {
                     return ResponseEntity.ok(Map.of("message", "No hay sugerencias disponibles"));
                 }
             } else {
-                return ResponseEntity.ok(Map.of("error", "Student implementation not available yet"));
+            	Optional<HexPosition> result = hexGameService.getIntelligentSuggestion(gameId, null);
+                return ResponseEntity.ok(Map.of("message", 
+                		result.isEmpty() ? "Sin Sugerencia!!" : result.get()
+                		));
             }
         } catch (Exception e) {
             return ResponseEntity.internalServerError()

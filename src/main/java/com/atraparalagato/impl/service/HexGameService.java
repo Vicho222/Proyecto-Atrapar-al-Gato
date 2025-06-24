@@ -1,7 +1,6 @@
 package com.atraparalagato.impl.service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -30,8 +29,8 @@ import com.atraparalagato.impl.factories.GameStateFactory;
 import com.atraparalagato.impl.factories.HexBoardFactory;
 import com.atraparalagato.impl.model.HexGameBoard;
 import com.atraparalagato.impl.model.HexGameState;
-import com.atraparalagato.impl.model.HexPosition;
 import com.atraparalagato.impl.model.HexGameState.LEVEL_OF_DIFFICULTY;
+import com.atraparalagato.impl.model.HexPosition;
 import com.atraparalagato.impl.strategy.AStarCatMovement;
 
 /**
@@ -94,7 +93,7 @@ public class HexGameService extends GameService<HexPosition> {
 		GameBoard<HexPosition> board = createGameBoard(boardSize);
 		GameState<HexPosition> gameState = createGameState(gameId);
 		HexGameState hexGameState = (HexGameState) gameState;
-		
+
 		if (LEVEL_OF_DIFFICULTY.valueOf(difficulty) != null)
 			hexGameState.setLevelOfDifficulty(LEVEL_OF_DIFFICULTY.valueOf(difficulty));
 
@@ -110,9 +109,7 @@ public class HexGameService extends GameService<HexPosition> {
 		// createGame");
 	}
 
-	
-	public Optional<String> obtainGameStatus(String gameId)
-	{
+	public Optional<String> obtainGameStatus(String gameId) {
 		Optional<GameState<HexPosition>> gameStateOpt = super.loadGameState(gameId);
 
 		if (gameStateOpt.isEmpty()) {
@@ -121,9 +118,10 @@ public class HexGameService extends GameService<HexPosition> {
 		}
 		// El juego existe
 		HexGameState gameState = (HexGameState) gameStateOpt.get();
-		
+
 		return Optional.of(gameState.getStatus().name());
 	}
+
 	/**
 	 * TODO: Ejecutar movimiento del jugador con validaciones avanzadas.
 	 */
@@ -229,7 +227,32 @@ public class HexGameService extends GameService<HexPosition> {
 		// 2. Predecir movimientos futuros del gato
 		// 3. Evaluar múltiples opciones
 		// 4. Retornar la mejor sugerencia según dificultad
-		throw new UnsupportedOperationException("Los estudiantes deben implementar getIntelligentSuggestion");
+		Optional<GameState<HexPosition>> gameStateOpt = super.loadGameState(gameId);
+
+		if (gameStateOpt.isEmpty()) {
+			// Se retora un Optiona vacío
+			return Optional.empty();
+		}
+		String myDifficult = difficulty;
+		HexGameState gameState = (HexGameState) gameStateOpt.get();
+		if(difficulty == null)
+		{
+			myDifficult = gameState.getLevelOfDifficulty().name();
+		}
+		
+		CatMovementStrategy<HexPosition>strategy = createMovementStrategy(myDifficult, gameState.getGameBoard());
+		
+		HexPosition targetPosition = getTargetPosition(gameState);
+		
+		if(targetPosition == null)
+			return Optional.empty();
+		
+		HexPosition catPosition = gameState.getCatPosition();
+		
+		Optional<HexPosition> result = strategy.findBestMove(catPosition, targetPosition);
+		
+		return result;
+		//throw new UnsupportedOperationException("Los estudiantes deben implementar getIntelligentSuggestion");
 	}
 
 	/**
@@ -263,8 +286,9 @@ public class HexGameService extends GameService<HexPosition> {
 		Function<Object, GameRecord> mapper = row -> {
 			GameState<HexPosition> m = (GameState<HexPosition>) row;
 			HexGameState gameState = (HexGameState) m;
-			return new GameRecord(gameState.getGameId(), gameState.getPlayerId(), gameState.getStatus().name(), gameState.getMoveCount(),
-					gameState.calculateScore(), gameState.getCreatedAt(), gameState.getFinishedAt()
+			return new GameRecord(gameState.getGameId(), gameState.getPlayerId(), gameState.getStatus().name(),
+					gameState.getMoveCount(), gameState.calculateScore(), gameState.getCreatedAt(),
+					gameState.getFinishedAt()
 
 			);
 		};
@@ -314,7 +338,6 @@ public class HexGameService extends GameService<HexPosition> {
 		// 3. Ayudas disponibles
 		// 4. Sistema de puntuación
 
-
 		Optional<GameState<HexPosition>> gameStateOpt = super.loadGameState(gameId);
 
 		if (gameStateOpt.isEmpty()) {
@@ -324,14 +347,14 @@ public class HexGameService extends GameService<HexPosition> {
 		// El juego existe
 		HexGameState gameState = (HexGameState) gameStateOpt.get();
 		LEVEL_OF_DIFFICULTY levleOfDifficulty = LEVEL_OF_DIFFICULTY.valueOf(difficulty);
-		if(levleOfDifficulty == null)
-		{
+		if (levleOfDifficulty == null) {
 			return;
 		}
 		gameState.setLevelOfDifficulty(levleOfDifficulty);
 		gameRepository.save(gameState);
 		onGameStateChanged(gameState);
-		//throw new UnsupportedOperationException("Los estudiantes deben implementar setGameDifficulty");
+		// throw new UnsupportedOperationException("Los estudiantes deben implementar
+		// setGameDifficulty");
 	}
 
 	/**
@@ -387,25 +410,21 @@ public class HexGameService extends GameService<HexPosition> {
 		// 2. Información del jugador
 		// 3. Fecha de la partida
 		// 4. Detalles de la partida
-		
+
 		String query = "SELECT * FROM GAMESSTATES ORDER BY POINTS LIMITS " + limit;
 		Function<Object, HexGameState> mapper = row -> {
 			return (HexGameState) row;
 		};
-			
+
 		List<HexGameState> results = gameRepository.executeCustomQuery(query, mapper);
-		return results.stream().map(r -> 
-		Map.of("gameId", r.getGameId(), "Puntuación", r.getPoints(), "Jugador", r.getPlayerId(), "Fecha Partida", r.getCreatedAt(), "Detalle Juego", 
-				Map.of(
-						"Tamaño Tablero", r.getBoardSize(),
-						"Posición Gato", r.getCatPosition(),
-						"Estado del Juego", r.getStatus(),
-						"Dificultad", r.getLevelOfDifficulty(),
-						"Fecha fin Juego", r.getFinishedAt()
-						))).toList();
-					
-		 
-		// throw new UnsupportedOperationException("Los estudiantes deben implementar getLeaderboard");
+		return results.stream().map(r -> Map.of("gameId", r.getGameId(), "Puntuación", r.getPoints(), "Jugador",
+				r.getPlayerId(), "Fecha Partida", r.getCreatedAt(), "Detalle Juego",
+				Map.of("Tamaño Tablero", r.getBoardSize(), "Posición Gato", r.getCatPosition(), "Estado del Juego",
+						r.getStatus(), "Dificultad", r.getLevelOfDifficulty(), "Fecha fin Juego", r.getFinishedAt())))
+				.toList();
+
+		// throw new UnsupportedOperationException("Los estudiantes deben implementar
+		// getLeaderboard");
 	}
 
 	// Métodos auxiliares que los estudiantes pueden implementar
@@ -468,15 +487,16 @@ public class HexGameService extends GameService<HexPosition> {
 	 * TODO: Notificar eventos del juego.
 	 */
 	private void notifyGameEvent(String gameId, String eventType, Map<String, Object> eventData) {
-		throw new UnsupportedOperationException("Método auxiliar para implementar");
+		//throw new UnsupportedOperationException("Método auxiliar para implementar");
+		
+		LOG.info(String.format("Juego: %s Evento: %s Datos:%s", gameId, eventType, eventData));
 	}
 
 	/**
 	 * TODO: Crear factory de estrategias según dificultad.
 	 */
-	@SuppressWarnings("rawtypes")
-	private CatMovementStrategy createMovementStrategy(String difficulty, HexGameBoard board) {
-		if (difficulty != null && difficulty.toUpperCase().contains("DIFICIL"))
+	private CatMovementStrategy<HexPosition> createMovementStrategy(String difficulty, HexGameBoard board) {
+		if (difficulty != null && difficulty.toUpperCase().contains(LEVEL_OF_DIFFICULTY.EASY.name()))
 			return new AStarCatMovement(board);
 
 		// Por defecto facil
@@ -490,11 +510,12 @@ public class HexGameService extends GameService<HexPosition> {
 	@Override
 	protected void initializeGame(GameState<HexPosition> gameState, GameBoard<HexPosition> gameBoard) {
 		// TODO: Inicializar el juego con estado y tablero
-		
-		HexGameState hexGameState = (HexGameState)gameState;
-		hexGameState.setCatPosition(new HexPosition(gameBoard.getSize(), gameBoard.getSize()));
-		
-		//throw new UnsupportedOperationException("Los estudiantes deben implementar initializeGame");
+
+		HexGameState hexGameState = (HexGameState) gameState;
+		hexGameState.setCatPosition(new HexPosition(0, 0));
+
+		// throw new UnsupportedOperationException("Los estudiantes deben implementar
+		// initializeGame");
 	}
 
 	@Override
@@ -526,6 +547,10 @@ public class HexGameService extends GameService<HexPosition> {
 		// getSuggestedMove");
 	}
 
+	/**
+	 * Para calcular el target, obtiene todos los bordes y luego busca el que tiene
+	 * menor distancia.
+	 */
 	@Override
 	protected HexPosition getTargetPosition(GameState<HexPosition> gameState) {
 		// TODO: Obtener posición objetivo para el gato
@@ -544,7 +569,7 @@ public class HexGameService extends GameService<HexPosition> {
 			return null;
 
 		HexPosition catPosition = hexGameState.getCatPosition();
-		
+
 		// Se considera objetivo, el borde más cercano.
 		return targetPositions.stream().min(Comparator.comparing(pos -> catPosition.distanceTo(pos))).orElse(null);
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
@@ -554,7 +579,18 @@ public class HexGameService extends GameService<HexPosition> {
 	@Override
 	public Object getGameStatistics(String gameId) {
 		// TODO: Obtener estadísticas del juego
-		throw new UnsupportedOperationException("Los estudiantes deben implementar getGameStatistics");
+		
+		Optional<GameState<HexPosition>> gameStateOpt = super.loadGameState(gameId);
+
+		if (gameStateOpt.isEmpty()) {
+			// Se retora un Optiona vacío
+			return null;
+		}
+		// El juego existe
+		HexGameState gameState = (HexGameState) gameStateOpt.get();
+		return gameState.getAdvancedStatistics();
+		
+		//throw new UnsupportedOperationException("Los estudiantes deben implementar getGameStatistics");
 	}
 
 	// Event handlers - Hook methods para extensibilidad
