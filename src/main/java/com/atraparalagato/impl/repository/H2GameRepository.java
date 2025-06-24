@@ -71,7 +71,7 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 		// 5. Llamar hooks beforeSave/afterSave
 
 		HexGameState gameState = (HexGameState) entity;
-		String sql = "MERGE INTO GAMESSTATES VALUES (? ,? ,? ,? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		String sql = "MERGE INTO GAMESSTATES VALUES (? ,? ,? ,? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		
 
 		Set<HexPosition> bloquedPos = gameState.getGameBoard().getBlockedPositions();
@@ -92,7 +92,8 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 				finishedAt, 
 				pausedAt, 
 				gameState.getLevelOfDifficulty().name(),
-				bloquedCells);
+				bloquedCells,
+				gameState.getPoints());
 		return gameState;
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// save");
@@ -351,7 +352,8 @@ public class H2GameRepository extends DataRepository<GameState<HexPosition>, Str
 				        FINISHED_AT TIMESTAMP,
 				        PAUSED_AT TIMESTAMP,
 				        LEVEL_OF_DIFFICULTY VARCHAR(30),
-				        BLOQUED_CELLS VARCHAR(255)
+				        BLOQUED_CELLS VARCHAR(255),
+				        POINTS INT
 				    )
 				""");
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS STATUS_IDX ON GAMESSTATES(STATUS)");

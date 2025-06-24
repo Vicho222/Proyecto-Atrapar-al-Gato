@@ -24,6 +24,7 @@ public class HexGameStateRowMapper implements RowMapper<GameState<HexPosition>> 
 		int invalidMovementes = rs.getInt("INVALID_MOVEMENTS");
 		int maxMovements = rs.getInt("MAX_MOVEMENTES");
 		int moveCount = rs.getInt("MOVE_COUNT");
+		int points = rs.getInt("POINTS");
 		GameStatus gameStatus = GameStatus.valueOf(rs.getString("STATUS"));
 		Timestamp createdAt = rs.getTimestamp("CREATED_AT");
 		String player = rs.getString("PLAYER");
@@ -49,6 +50,7 @@ public class HexGameStateRowMapper implements RowMapper<GameState<HexPosition>> 
 		if (pausedAt != null)
 			gameState.setPausedAt(pausedAt.toLocalDateTime());
 		gameState.getGameBoard().setBloquedPositions(bloquedPositions);
+		gameState.setPoints(points);
 		
 		return gameState;
 	}

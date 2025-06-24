@@ -279,6 +279,7 @@ public class GameController {
     
     private ResponseEntity<Map<String, Object>> blockPositionWithStudentImplementation(String gameId, HexPosition position) {
         // TODO: Los estudiantes deben implementar esto usando sus propias clases
+    	
     	Optional<GameState<HexPosition>> result = hexGameService.executePlayerMove(gameId, position);
     	
         if(result.isEmpty())

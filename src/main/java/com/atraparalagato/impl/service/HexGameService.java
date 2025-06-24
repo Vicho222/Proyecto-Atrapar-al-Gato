@@ -411,7 +411,7 @@ public class HexGameService extends GameService<HexPosition> {
 		// 3. Fecha de la partida
 		// 4. Detalles de la partida
 
-		String query = "SELECT * FROM GAMESSTATES ORDER BY POINTS LIMITS " + limit;
+		String query = "SELECT * FROM GAMESSTATES  WHERE STATUS IN ( 'PLAYER_WON', 'PLAYER_LOST' ) ORDER BY POINTS LIMIT " + limit;
 		Function<Object, HexGameState> mapper = row -> {
 			return (HexGameState) row;
 		};
@@ -592,6 +592,20 @@ public class HexGameService extends GameService<HexPosition> {
 		//throw new UnsupportedOperationException("Los estudiantes deben implementar getGameStatistics");
 	}
 
+	protected void executeCatMove(GameState<HexPosition> gameState) {
+		HexPosition currentPosition = gameState.getCatPosition();
+		HexPosition targetPosition = getTargetPosition(gameState);
+
+		HexGameState hexGameState = (HexGameState)gameState;
+		var strategy = createMovementStrategy(hexGameState.getLevelOfDifficulty().name(), hexGameState.getGameBoard());
+		Optional<HexPosition> nextMove = strategy.findBestMove(currentPosition, targetPosition);
+
+		if (nextMove.isPresent()) {
+			gameState.setCatPosition(nextMove.get());
+			onCatMoved(gameState, nextMove.get());
+		}
+	}
+	
 	// Event handlers - Hook methods para extensibilidad
 	protected void onGameStarted(GameState<HexPosition> gameState) {
 		// Default: no operation

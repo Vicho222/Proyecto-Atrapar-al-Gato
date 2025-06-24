@@ -49,7 +49,7 @@ public class AStarCatMovement extends CatMovementStrategy<HexPosition> {
 		/*
 		 * E.OSORIO
 		 * 
-		 * Se buscan las posiciones adjacentes del gato, para se usadas despuén en
+		 * Se buscan las posiciones adjacentes del gato, para se usadas después en
 		 * determinar el mejor camino a una salida.
 		 */
 		return board.getAdjacentPositions(currentPosition).stream().filter(p -> !board.isBlocked(currentPosition))

@@ -114,7 +114,7 @@ public class HexGameState extends GameState<HexPosition> {
 		 * E.OSORIO Si el juego está en progreso y el movimiento es válido.
 		 */
 		boolean isPaused = GameStatus.PAUSED.equals(getStatus());
-		return !isGameFinished() && !isPaused && gameBoard.isValidMove(position) && !catPosition.equals(position);
+		return !isGameFinished() && !isPaused && gameBoard.isValidMove(position);
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// canExecuteMove");
 	}
