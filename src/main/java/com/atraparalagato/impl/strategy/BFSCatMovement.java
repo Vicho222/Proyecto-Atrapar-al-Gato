@@ -1,108 +1,115 @@
 package com.atraparalagato.impl.strategy;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
 import com.atraparalagato.base.model.GameBoard;
 import com.atraparalagato.base.strategy.CatMovementStrategy;
 import com.atraparalagato.impl.model.HexPosition;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 /**
- * Implementación esqueleto de estrategia BFS (Breadth-First Search) para el gato.
- * 
- * Los estudiantes deben completar los métodos marcados con TODO.
- * 
- * Conceptos a implementar:
- * - Algoritmo BFS para pathfinding
- * - Exploración exhaustiva de caminos
- * - Garantía de encontrar el camino más corto
- * - Uso de colas para exploración por niveles
+ * Estrategia de movimiento del gato basada en BFS.
+ * Busca siempre el camino más corto al borde del tablero.
  */
 public class BFSCatMovement extends CatMovementStrategy<HexPosition> {
-    
+
     public BFSCatMovement(GameBoard<HexPosition> board) {
         super(board);
     }
-    
+
     @Override
     protected List<HexPosition> getPossibleMoves(HexPosition currentPosition) {
-        // TODO: Obtener todas las posiciones adyacentes válidas
-        // Filtrar posiciones bloqueadas y fuera de límites
-        throw new UnsupportedOperationException("Los estudiantes deben implementar getPossibleMoves");
+        return board.getAdjacentPositions(currentPosition).stream()
+                .filter(pos -> !board.isBlocked(pos))
+                .toList();
     }
-    
+
     @Override
-    protected Optional<HexPosition> selectBestMove(List<HexPosition> possibleMoves, 
-                                                  HexPosition currentPosition, 
-                                                  HexPosition targetPosition) {
-        // TODO: Usar BFS para encontrar el mejor movimiento
-        // 1. Ejecutar BFS desde cada posible movimiento
-        // 2. Evaluar cuál lleva más rápido al objetivo
-        // 3. Retornar el primer paso del mejor camino
-        throw new UnsupportedOperationException("Los estudiantes deben implementar selectBestMove");
+    protected Optional<HexPosition> selectBestMove(List<HexPosition> possibleMoves,
+                                                   HexPosition currentPosition,
+                                                   HexPosition targetPosition) {
+        List<HexPosition> path = findShortestPathToBorder(currentPosition);
+        return (path.size() >= 2) ? Optional.of(path.get(1)) : Optional.empty();
     }
-    
+
     @Override
     protected Function<HexPosition, Double> getHeuristicFunction(HexPosition targetPosition) {
-        // TODO: BFS no necesita heurística, pero puede usarse para desempate
-        // Retornar función que calcule distancia euclidiana o Manhattan
-        throw new UnsupportedOperationException("Los estudiantes deben implementar getHeuristicFunction");
+        return pos -> 0.0;
     }
-    
+
     @Override
     protected Predicate<HexPosition> getGoalPredicate() {
-        // TODO: Definir condición de objetivo (llegar al borde)
-        throw new UnsupportedOperationException("Los estudiantes deben implementar getGoalPredicate");
+        int size = board.getSize();
+        return p -> Math.abs(p.getQ()) >= size ||
+                    Math.abs(p.getR()) >= size ||
+                    Math.abs(p.getS()) >= size;
     }
-    
+
     @Override
     protected double getMoveCost(HexPosition from, HexPosition to) {
-        // TODO: BFS usa costo uniforme (1.0 para movimientos adyacentes)
-        throw new UnsupportedOperationException("Los estudiantes deben implementar getMoveCost");
+        return 1.0;
     }
-    
+
     @Override
     public boolean hasPathToGoal(HexPosition currentPosition) {
-        // TODO: Implementar BFS para verificar si existe camino al objetivo
-        // 1. Usar cola para exploración por niveles
-        // 2. Marcar posiciones visitadas
-        // 3. Retornar true si se encuentra el objetivo
-        throw new UnsupportedOperationException("Los estudiantes deben implementar hasPathToGoal");
+        return !findShortestPathToBorder(currentPosition).isEmpty();
     }
-    
+
     @Override
     public List<HexPosition> getFullPath(HexPosition currentPosition, HexPosition targetPosition) {
-        // TODO: Implementar BFS completo para encontrar camino
-        // 1. Usar cola con información de camino
-        // 2. Reconstruir camino desde objetivo hasta inicio
-        // 3. Retornar camino completo
-        throw new UnsupportedOperationException("Los estudiantes deben implementar getFullPath");
+        return findShortestPathToBorder(currentPosition);
     }
-    
-    // Métodos auxiliares que los estudiantes pueden implementar
-    
-    /**
-     * TODO: Ejecutar BFS desde una posición hasta encontrar objetivo.
-     */
-    private Optional<List<HexPosition>> bfsToGoal(HexPosition start) {
-        throw new UnsupportedOperationException("Método auxiliar para implementar");
+
+    /* ---------------- Métodos auxiliares ---------------- */
+
+    private List<HexPosition> findShortestPathToBorder(HexPosition start) {
+        Queue<HexPosition> queue = new LinkedList<>();
+        Map<HexPosition, HexPosition> parent = new HashMap<>();
+        Set<HexPosition> visited = new HashSet<>();
+
+        queue.add(start);
+        visited.add(start);
+        parent.put(start, null);
+
+        while (!queue.isEmpty()) {
+            HexPosition current = queue.poll();
+
+            if (getGoalPredicate().test(current)) {
+                return reconstructPath(parent, current);
+            }
+
+            for (HexPosition neighbor : board.getAdjacentPositions(current)) {
+                if (!visited.contains(neighbor) && !board.isBlocked(neighbor)) {
+                    visited.add(neighbor);
+                    parent.put(neighbor, current);
+                    queue.add(neighbor);
+                }
+            }
+        }
+        return Collections.emptyList();
     }
-    
-    /**
-     * TODO: Reconstruir camino desde mapa de padres.
-     */
-    private List<HexPosition> reconstructPath(Map<HexPosition, HexPosition> parentMap, 
-                                            HexPosition start, HexPosition goal) {
-        throw new UnsupportedOperationException("Método auxiliar para implementar");
+
+    private List<HexPosition> reconstructPath(Map<HexPosition, HexPosition> parent,
+                                              HexPosition goal) {
+        List<HexPosition> path = new ArrayList<>();
+        HexPosition cur = goal;
+        while (cur != null) {
+            path.add(cur);
+            cur = parent.get(cur);
+        }
+        Collections.reverse(path);
+        return path;
     }
-    
-    /**
-     * TODO: Evaluar calidad de un camino encontrado.
-     */
-    private double evaluatePathQuality(List<HexPosition> path) {
-        throw new UnsupportedOperationException("Método auxiliar para implementar");
+
+    @Override
+    protected void beforeMovementCalculation(HexPosition currentPosition) {
+        System.out.println("Calculando movimiento del gato desde: " + currentPosition);
     }
-} 
+
+    @Override
+    protected void afterMovementCalculation(Optional<HexPosition> selectedMove) {
+        System.out.println(selectedMove.map(p -> "Gato se mueve a: " + p)
+                                       .orElse("¡Gato no puede moverse! Está atrapado."));
+    }
+}

@@ -483,20 +483,7 @@ public class HexGameService extends GameService<HexPosition> {
 		throw new UnsupportedOperationException("Método auxiliar para implementar");
 	}
 
-	/**
-	 * TODO: Ejecutar movimiento del gato usando estrategia apropiada.
-	 */
-	@SuppressWarnings("unchecked")
-	private void executeCatMove(HexGameState gameState, String difficulty) {
-		var strategy = createMovementStrategy(difficulty, gameState.getGameBoard());
-		Optional<HexPosition> movement = strategy.findBestMove(gameState.getCatPosition(),
-				getTargetPosition(gameState));
-		if (movement.isEmpty())
-			return;
 
-		gameState.executeMove(movement.get());
-//		throw new UnsupportedOperationException("Método auxiliar para implementar");
-	}
 
 	/**
 	 * TODO: Calcular puntuación avanzada.
@@ -543,7 +530,7 @@ public class HexGameService extends GameService<HexPosition> {
 	 * TODO: Crear factory de estrategias según dificultad.
 	 */
 	private CatMovementStrategy<HexPosition> createMovementStrategy(String difficulty, HexGameBoard board) {
-		if (difficulty != null && difficulty.toUpperCase().contains(LEVEL_OF_DIFFICULTY.EASY.name()))
+		if (difficulty != null && difficulty.toUpperCase().contains(LEVEL_OF_DIFFICULTY.HARD.name()))
 			return new AStarCatMovement(board);
 
 		// Por defecto facil
@@ -642,17 +629,34 @@ public class HexGameService extends GameService<HexPosition> {
 	}
 
 	protected void executeCatMove(GameState<HexPosition> gameState) {
-		HexPosition currentPosition = gameState.getCatPosition();
-		HexPosition targetPosition = getTargetPosition(gameState);
-
+//		HexPosition currentPosition = gameState.getCatPosition();
+//		HexPosition targetPosition = getTargetPosition(gameState);
+//
+//		HexGameState hexGameState = (HexGameState) gameState;
+//		var strategy = createMovementStrategy(hexGameState.getLevelOfDifficulty().name(), hexGameState.getGameBoard());
+//		Optional<HexPosition> nextMove = strategy.findBestMove(currentPosition, targetPosition);
+//
+//		if (nextMove.isPresent()) {
+//			gameState.setCatPosition(nextMove.get());
+//			onCatMoved(gameState, nextMove.get());
+//		}
 		HexGameState hexGameState = (HexGameState) gameState;
-		var strategy = createMovementStrategy(hexGameState.getLevelOfDifficulty().name(), hexGameState.getGameBoard());
-		Optional<HexPosition> nextMove = strategy.findBestMove(currentPosition, targetPosition);
-
-		if (nextMove.isPresent()) {
-			gameState.setCatPosition(nextMove.get());
-			onCatMoved(gameState, nextMove.get());
-		}
+		executeCatMove(hexGameState, hexGameState.getLevelOfDifficulty().name());
+	}
+	
+	/**
+	 * TODO: Ejecutar movimiento del gato usando estrategia apropiada.
+	 */
+	private void executeCatMove(HexGameState gameState, String difficulty) {
+		var strategy = createMovementStrategy(difficulty, gameState.getGameBoard());
+		Optional<HexPosition> movement = strategy.findBestMove(gameState.getCatPosition(),
+				getTargetPosition(gameState));
+		if (movement.isEmpty())
+			return;
+		gameState.setCatPosition(movement.get());
+		onCatMoved(gameState, movement.get());
+		//gameState.executeMove(movement.get());
+//		throw new UnsupportedOperationException("Método auxiliar para implementar");
 	}
 
 	// Event handlers - Hook methods para extensibilidad

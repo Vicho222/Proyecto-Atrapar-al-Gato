@@ -84,7 +84,9 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 		// .filter(condition)
 		// .collect(Collectors.toList());
 
-		return getAllPossiblePositions().stream().filter(condition).collect(Collectors.toList());
+		return getAllPossiblePositions().stream()
+				.filter(condition)
+				.collect(Collectors.toList());
 		// throw new UnsupportedOperationException("Los estudiantes deben implementar
 		// este método");
 	}
@@ -104,7 +106,8 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 				new HexPosition(0, 1) // Sureste (Abajo)
 		};
 
-		return Arrays.stream(directions).map(dir -> (HexPosition) position.add(dir)) // Se mapea a la position actual
+		return Arrays.stream(directions)
+				.map(dir -> (HexPosition) position.add(dir)) // Se mapea a la position actual
 																						// más cada una de las
 																						// direcciones
 				.filter(this::isPositionInBounds) // Se valida que las posiciones creadas estén dentro del borde
@@ -155,7 +158,7 @@ public class HexGameBoard extends GameBoard<HexPosition> {
 		/*
 		 * E.OSORIO Filtra todas las posiciones válidas y que no estén en el borde
 		 */
-		return elements.stream().filter(p -> isPositionInBounds(p) && !isAtBorder(p)).collect(Collectors.toList());
+		return elements.stream().filter(p -> isPositionInBounds(p) && !isAtBorder(p)).toList();
 		// throw new UnsupportedOperationException("Método auxiliar para implementar");
 	}
 

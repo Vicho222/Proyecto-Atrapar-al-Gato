@@ -77,6 +77,7 @@ public class AStarCatMovement extends CatMovementStrategy<HexPosition> {
 		 * destino para calcular el costo de movers y la heurística.
 		 */
 		Function<HexPosition, Double> heuristicFunction = getHeuristicFunction(targetPosition);
+		
 		BiFunction<HexPosition, HexPosition, Double> fScoreFun = (currentPos, toPos) -> getMoveCost(currentPos, toPos)
 				+ heuristicFunction.apply(toPos);
 
