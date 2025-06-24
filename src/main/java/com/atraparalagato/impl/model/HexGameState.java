@@ -361,13 +361,12 @@ public class HexGameState extends GameState<HexPosition> {
 	 */
 	public Map<String, Object> getAdvancedStatistics() {
 		Map<String, Object> state = new HashMap<>();
-		state.put("status", getStatus().toString());
-		state.put("moveCount", getMoveCount());
-		state.put("invalidMovements", getInvalidMovements());
-		state.put("maxMovements", getMaxMovements());
-		state.put("boardSize", boardSize);
-		state.put("points", points);
-		state.put("Celdas bloqueadas", getGameBoard().getBlockedPositions());
+        state.put("gameId", getGameId());
+        state.put("catPosition", Map.of("q", catPosition.getQ(), "r", catPosition.getR()));
+        state.put("blockedCells", gameBoard.getBlockedPositions());
+        state.put("status", getStatus().toString());
+        state.put("moveCount", getMoveCount());
+        state.put("boardSize", boardSize);
 		return state;
 		//throw new UnsupportedOperationException("Método adicional para implementar");
 	}
